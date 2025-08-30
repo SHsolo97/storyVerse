@@ -35,31 +35,31 @@ export class GameplayService {
     }
 
     // Get or create player progress
-    let playerProgress = await this.playerProgressModel.findOne({
-      userId,
-      storyId: chapterContent.storyId,
-    }).exec();
-
-    if (!playerProgress) {
-      // Create new progress
-      const firstSceneId = Object.keys(chapterContent.scenes)[0];
-      playerProgress = new this.playerProgressModel({
-        userId,
-        storyId: chapterContent.storyId,
-        currentChapterId: chapterId,
-        currentSceneId: firstSceneId,
-        relationshipScores: {},
-        flags: {},
-        choicesMade: [],
-      });
-      await playerProgress.save();
-    } else {
-      // Update current chapter
-      playerProgress.currentChapterId = chapterId;
-      playerProgress.currentSceneId = Object.keys(chapterContent.scenes)[0];
-      playerProgress.lastPlayedAt = new Date();
-      await playerProgress.save();
-    }
+    const firstSceneId = Object.keys(chapterContent.scenes)[0];
+    const playerProgress = await this.playerProgressModel.findOneAndUpdate(
+      { userId, storyId: chapterContent.storyId },
+      {
+        $setOnInsert: {
+          userId,
+          storyId: chapterContent.storyId,
+          relationshipScores: {},
+          flags: {},
+          choicesMade: [],
+          createdAt: new Date(),
+        },
+        $set: {
+          currentChapterId: chapterId,
+          currentSceneId: firstSceneId,
+          lastPlayedAt: new Date(),
+          updatedAt: new Date(),
+        },
+      },
+      { 
+        upsert: true, 
+        new: true, 
+        runValidators: true 
+      }
+    ).exec();
 
     const sceneData = chapterContent.scenes[playerProgress.currentSceneId];
 
@@ -147,6 +147,58 @@ export class GameplayService {
 
     // Get next scene data
     const nextSceneData = storyContent.scenes[selectedChoice.nextSceneId];
+
+    return {
+      sceneData: nextSceneData,
+      nextSceneId: nextSceneData?.nextSceneId,
+      playerProgress: {
+        currentSceneId: playerProgress.currentSceneId,
+        relationshipScores: playerProgress.relationshipScores,
+        flags: playerProgress.flags,
+      },
+    };
+  }
+
+  async advanceScene(userId: string, storyId: string, currentSceneId: string): Promise<GameplayResponseDto> {
+    // Get player progress
+    const playerProgress = await this.playerProgressModel.findOne({
+      userId,
+      storyId,
+    }).exec();
+
+    if (!playerProgress) {
+      throw new NotFoundException('Player progress not found');
+    }
+
+    // Get story content
+    const storyContent = await this.storyContentModel.findOne({
+      chapterId: playerProgress.currentChapterId,
+    }).exec();
+
+    if (!storyContent) {
+      throw new NotFoundException('Story content not found');
+    }
+
+    const currentScene = storyContent.scenes[currentSceneId];
+    if (!currentScene) {
+      throw new BadRequestException('Invalid scene');
+    }
+
+    // Check if scene has nextSceneId and no choice (auto-advance scene)
+    if (!currentScene.nextSceneId || currentScene.choice) {
+      throw new BadRequestException('Scene cannot be auto-advanced');
+    }
+
+    // Update player progress to next scene
+    playerProgress.currentSceneId = currentScene.nextSceneId;
+    playerProgress.lastPlayedAt = new Date();
+    await playerProgress.save();
+
+    // Get next scene data
+    const nextSceneData = storyContent.scenes[currentScene.nextSceneId];
+    if (!nextSceneData) {
+      throw new NotFoundException('Next scene not found');
+    }
 
     return {
       sceneData: nextSceneData,

@@ -1,19 +1,21 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MongooseModule } from '@nestjs/mongoose';
-import { SeedService } from './seed.service';
+import { DebugController } from './debug.controller';
 import { Story } from '../common/entities/story.entity';
 import { Chapter } from '../common/entities/chapter.entity';
+import { User } from '../common/entities/user.entity';
 import { StoryContent, StoryContentSchema } from '../common/entities/story-content.schema';
+import { PlayerProgress, PlayerProgressSchema } from '../common/entities/player-progress.schema';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Story, Chapter]),
+    TypeOrmModule.forFeature([Story, Chapter, User]),
     MongooseModule.forFeature([
       { name: StoryContent.name, schema: StoryContentSchema },
+      { name: PlayerProgress.name, schema: PlayerProgressSchema }
     ]),
   ],
-  providers: [/* SeedService */],
-  exports: [/* SeedService */],
+  controllers: [DebugController],
 })
-export class DatabaseModule {}
+export class DebugModule {}

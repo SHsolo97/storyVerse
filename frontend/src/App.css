@@ -1,0 +1,13 @@
+/* Additional app-specific styles */
+.App {
+  min-height: 100vh;
+}
+
+/* Utility classes */
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

@@ -92,6 +92,37 @@ export class GameplayController {
     return this.gameplayService.makeChoice(req.user.sub, makeChoiceDto);
   }
 
+  @Post('advance-scene')
+  @ApiOperation({ 
+    summary: 'Advance to next scene',
+    description: 'Automatically advance to the next scene when the current scene has no choices but has a nextSceneId.'
+  })
+  @ApiResponse({ 
+    status: 201, 
+    description: 'Scene advanced successfully, returns next scene data',
+    example: {
+      sceneData: {
+        background: "https://example.com/backgrounds/academy.jpg",
+        timeline: [
+          {
+            type: "narration",
+            text: "You arrive at the next location..."
+          }
+        ]
+      },
+      playerProgress: {
+        currentSceneId: "scene_2",
+        relationshipScores: {},
+        flags: {}
+      }
+    }
+  })
+  @ApiResponse({ status: 400, description: 'Invalid scene or no next scene available' })
+  @ApiResponse({ status: 404, description: 'Player progress or story content not found' })
+  async advanceScene(@Request() req: any, @Body() body: { storyId: string; currentSceneId: string }) {
+    return this.gameplayService.advanceScene(req.user.sub, body.storyId, body.currentSceneId);
+  }
+
   @Get('progress/:storyId')
   @ApiOperation({ 
     summary: 'Get player progress',

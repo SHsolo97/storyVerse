@@ -24,6 +24,7 @@ import { InventoryModule } from './modules/inventory/inventory.module';
 import { PaymentModule } from './modules/payment/payment.module';
 import { DatabaseModule } from './database/database.module';
 import { HealthModule } from './health/health.module';
+import { DebugModule } from './debug/debug.module';
 
 // Guards
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
@@ -90,6 +91,7 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
     PaymentModule,
     DatabaseModule,
     HealthModule,
+    DebugModule,
   ],
   controllers: [AppController],
   providers: [

@@ -1,4 +1,5 @@
 import { IsString, IsNumber, IsOptional, IsBoolean } from 'class-validator';
+import { Transform, Type } from 'class-transformer';
 
 export class CreateStoryDto {
   @IsString()
@@ -46,10 +47,12 @@ export class StoryListDto {
   search?: string;
 
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   page?: number = 1;
 
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   limit?: number = 10;
 
