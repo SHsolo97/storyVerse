@@ -1,0 +1,77 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: storyverse-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: storyverse
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - storyverse-network
+
+  # MongoDB Database
+  mongo:
+    image: mongo:6-jammy
+    container_name: storyverse-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - storyverse-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: storyverse-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - storyverse-network
+
+  # Backend Application
+  backend:
+    build:
+      context: .
+      target: development
+    container_name: storyverse-backend
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: development
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USERNAME: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DATABASE: storyverse
+      MONGODB_URI: mongodb://mongo:27017/storyverse
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    depends_on:
+      - postgres
+      - mongo
+      - redis
+    networks:
+      - storyverse-network
+    command: pnpm run start:dev
+
+networks:
+  storyverse-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  mongo_data:
+  redis_data:
